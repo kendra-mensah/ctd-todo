@@ -1,6 +1,6 @@
 import TodoListItem from './TodoListItem.jsx';
 
-function TodoList({ todos, onCompleteTodo }) {
+function TodoList({ todos, onCompleteTodo, onUpdateTodo }) {
   return (
     <>
       {todos.length === 0 ? (
@@ -12,6 +12,7 @@ function TodoList({ todos, onCompleteTodo }) {
               key={todo.id}
               todo={todo}
               onCompleteTodo={onCompleteTodo}
+              onUpdateTodo={onUpdateTodo}
             />
           ))}
         </ul>
