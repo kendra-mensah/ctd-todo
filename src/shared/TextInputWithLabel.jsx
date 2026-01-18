@@ -1,16 +1,12 @@
-<<<<<<< Updated upstream
-function TextInputWithLabel({ elementId, label, onChange, inputRef, value }) {
-=======
 import { forwardRef } from 'react';
 
 const TextInputWithLabel = forwardRef(function TextInputWithLabel(
   { elementId, labelText, onChange, value },
   ref
 ) {
->>>>>>> Stashed changes
   return (
     <>
-      <label htmlFor={elementId}>{label}</label>
+      <label htmlFor={elementId}>{labelText}</label>
       <input
         type="text"
         id={elementId}
