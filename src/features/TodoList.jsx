@@ -1,9 +1,6 @@
 import TodoListItem from './TodoListItem.jsx';
 
-function TodoList({ todos, onCompleteTodo, onUpdateTodo, isLoading }) {
-  if (isLoading) {
-    return <p>Todo list loading...</p>;
-  }
+function TodoList({ todos, onCompleteTodo, onUpdateTodo }) {
   return (
     <>
       {todos.length === 0 ? (
