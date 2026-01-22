@@ -1,10 +1,4 @@
-function TextInputWithLabel({
-  elementId,
-  labelText,
-  onChange,
-  ref,
-  value,
-}) {
+function TextInputWithLabel({ elementId, labelText, onChange, value, ref }) {
   return (
     <>
       <label htmlFor={elementId}>{labelText}</label>
@@ -17,6 +11,6 @@ function TextInputWithLabel({
       />
     </>
   );
-});
+}
 
 export default TextInputWithLabel;
