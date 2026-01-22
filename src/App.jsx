@@ -1,5 +1,6 @@
 import './App.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // useState hook to return an array with two values
+// useEffect to synchronize with external system
 
 import TodoList from './features/TodoList.jsx';
 import TodoForm from './features/TodoForm.jsx';
@@ -25,6 +26,7 @@ function App() {
   const [queryString, setQueryString] = useState('');
 
   useEffect(() => {
+    // Create connection to Airtable
     const fetchTodos = async () => {
       try {
         const response = await fetch(

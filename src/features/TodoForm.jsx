@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import TextInputWithLabel from './TextInputWithLabel';
+import TextInputWithLabel from '../shared/TextInputWithLabel';
 
 function TodoForm({ onAddTodo }) {
   const [workingTodo, setWorkingTodo] = useState('');
