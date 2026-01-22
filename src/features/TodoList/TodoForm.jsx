@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import TextInputWithLabel from '../../shared/TextInputWithLabel';
 import { useRef } from 'react';
+import { useEffect } from 'react';
 
-function TodoForm({ onAddTodo }) {
-  const [workingTodo, setWorkingTodo] = useState('');
+function TodoForm({ onAddTodo, isSaving, todo }) {
+  const [workingTitle, setWorkingTitle] = useState(todo ? todo.title : '');
+
+  // Sync workingTitle with todo prop whenever it changes
+  useEffect(() => {
+    if (todo) {
+      setWorkingTitle(todo.title);
+    }
+  }, [todo]);
 
   function handleAddTodo(event) {
     event.preventDefault();
-    onAddTodo(workingTodo);
-    setWorkingTodo('');
+    onAddTodo({ ...todo, title: workingTitle }); // pass updated title if editing
+    setWorkingTitle(''); // clear input after adding
   }
 
   return (
@@ -17,17 +25,12 @@ function TodoForm({ onAddTodo }) {
         labelText="Todo"
         elementId="title"
         ref={useRef}
-        value={workingTodo}
-        onChange={(e) => setWorkingTodo(e.target.value)}
+        value={workingTitle}
+        onChange={(e) => setWorkingTitle(e.target.value)}
       />
-      {/* <label htmlFor="title">New Todo</label> */}
-      {/* <input
-        id="title"
-        name="title"
-        type="text"
-      /> */}
-
-      <button disabled={workingTodo === ''}>Add Todo</button>
+      <button disabled={workingTitle.trim() === ''}>
+        {isSaving ? 'Saving...' : 'Add Todo'}
+      </button>
     </form>
   );
 }

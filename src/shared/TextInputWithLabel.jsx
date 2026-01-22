@@ -1,9 +1,10 @@
-import { forwardRef } from 'react';
-
-const TextInputWithLabel = forwardRef(function TextInputWithLabel(
-  { elementId, labelText, onChange, value },
-  ref
-) {
+function TextInputWithLabel({
+  elementId,
+  labelText,
+  onChange,
+  ref,
+  value,
+}) {
   return (
     <>
       <label htmlFor={elementId}>{labelText}</label>
