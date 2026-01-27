@@ -1,23 +1,9 @@
 import './App.css';
-import { useState, useEffect } from 'react'; // useState hook to return an array with two values
-// useEffect to synchronize with external system
+import { useState, useEffect, useCallback } from 'react';
 
 import TodoList from './features/TodoList.jsx';
 import TodoForm from './features/TodoForm.jsx';
 import TodoViewForm from './features/TodoViewForm.jsx';
-
-const encodeUrl = ({ sortField, sortDirection, queryString }) => {
-  const url = 'https://api.airtable.com/v0/appa4EmUyKCfmX6wm/Todos';
-
-  let sortQuery = `sort[0][field]=${sortField}&sort[0][direction]=${sortDirection}`;
-  let searchQuery = '';
-
-  if (queryString) {
-    searchQuery = `&filterByFormula=SEARCH("${queryString}",+title)`;
-  }
-
-  return encodeURI(`${url}?${sortQuery}${searchQuery}`);
-};
 
 function App() {
   const [todoList, setTodoList] = useState([]);
@@ -25,18 +11,28 @@ function App() {
   const [sortDirection, setSortDirection] = useState('desc');
   const [queryString, setQueryString] = useState('');
 
+  const encodeUrl = useCallback(() => {
+    const url = 'https://api.airtable.com/v0/appa4EmUyKCfmX6wm/Todos';
+
+    let sortQuery = `sort[0][field]=${sortField}&sort[0][direction]=${sortDirection}`;
+    let searchQuery = '';
+
+    if (queryString) {
+      searchQuery = `&filterByFormula=SEARCH("${queryString}",+title)`;
+    }
+
+    return encodeURI(`${url}?${sortQuery}${searchQuery}`);
+  }, [sortField, sortDirection, queryString]);
+
   useEffect(() => {
-    // Create connection to Airtable
     const fetchTodos = async () => {
       try {
-        const response = await fetch(
-          encodeUrl({ sortField, sortDirection, queryString }),
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.REACT_APP_AIRTABLE_API_KEY}`,
-            },
-          }
-        );
+        const response = await fetch(encodeUrl(), {
+          headers: {
+            Authorization: `Bearer ${process.env.REACT_APP_AIRTABLE_API_KEY}`,
+          },
+        });
+
         const data = await response.json();
         setTodoList(data.records || []);
       } catch (error) {
@@ -45,11 +41,11 @@ function App() {
     };
 
     fetchTodos();
-  }, [sortField, sortDirection, queryString]);
+  }, [encodeUrl]);
 
   const addTodo = (title) => {
     const newTodo = {
-      title: title,
+      title,
       id: Date.now(),
       isCompleted: false,
     };
@@ -73,6 +69,7 @@ function App() {
   return (
     <div>
       <h1>Todo List</h1>
+
       <TodoForm onAddTodo={addTodo} />
 
       <TodoList

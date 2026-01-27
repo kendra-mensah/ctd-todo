@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 function TodoViewForm({
   sortField,
   setSortField,
@@ -8,16 +10,29 @@ function TodoViewForm({
 }) {
   const preventRefresh = (e) => e.preventDefault();
 
+  // Local state for the search input
+  const [localQueryString, setLocalQueryString] = useState(queryString);
+
+  // useEffect for debouncing the search input
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      setQueryString(localQueryString);
+    }, 500); // 500ms delay
+
+    // Cleanup previous timeout on new keystroke
+    return () => clearTimeout(debounce);
+  }, [localQueryString, setQueryString]);
+
   return (
     <form onSubmit={preventRefresh}>
       <div style={{ marginBottom: '1rem' }}>
         <label>Search todos:</label>
         <input
           type="text"
-          value={queryString}
-          onChange={(e) => setQueryString(e.target.value)}
+          value={localQueryString}
+          onChange={(e) => setLocalQueryString(e.target.value)}
         />
-        <button type="button" onClick={() => setQueryString('')}>
+        <button type="button" onClick={() => setLocalQueryString('')}>
           Clear
         </button>
       </div>
