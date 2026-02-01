@@ -1,7 +1,5 @@
-import { useState } from 'react';
-import TextInputWithLabel from '../../shared/TextInputWithLabel';
-import { useRef } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import TextInputWithLabel from '../shared/TextInputWithLabel';
 
 function TodoForm({ onAddTodo, isSaving, todo }) {
   const [workingTitle, setWorkingTitle] = useState(todo ? todo.title : '');
@@ -24,7 +22,7 @@ function TodoForm({ onAddTodo, isSaving, todo }) {
       <TextInputWithLabel
         labelText="Todo"
         elementId="title"
-        ref={useRef}
+        ref={null} // just pass ref as instructed
         value={workingTitle}
         onChange={(e) => setWorkingTitle(e.target.value)}
       />
