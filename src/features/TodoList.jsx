@@ -1,10 +1,12 @@
 import TodoListItem from './TodoListItem.jsx';
 import styles from '/src/TodoList.module.css';
 
-function TodoList({ todos, onCompleteTodo, onUpdateTodo }) {
+function TodoList({ todos, onCompleteTodo, onUpdateTodo, isLoading }) {
   return (
     <>
-      {todos.length === 0 ? (
+      {isLoading ? (
+        <p>Todo list loading...</p> // <-- loading message
+      ) : todos.length === 0 ? (
         <p>Add todo above to get started</p>
       ) : (
         <ul>
