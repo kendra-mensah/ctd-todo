@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
 import TextInputWithLabel from '../shared/TextInputWithLabel';
+import styled from 'styled-components';
+
+const Form = styled.form`
+  padding: 0.5rem;
+`;
+
+const Button = styled.button`
+  &:disabled {
+    font-style: italic;
+  }
+`;
 
 function TodoForm({ onAddTodo, isSaving, todo }) {
   const [workingTitle, setWorkingTitle] = useState(todo ? todo.title : '');
@@ -13,12 +24,12 @@ function TodoForm({ onAddTodo, isSaving, todo }) {
 
   function handleAddTodo(event) {
     event.preventDefault();
-    onAddTodo({ ...todo, title: workingTitle }); // pass updated title if editing
+    onAddTodo(workingTitle); // pass updated title if editing
     setWorkingTitle(''); // clear input after adding
   }
 
   return (
-    <form onSubmit={handleAddTodo}>
+    <Form onSubmit={handleAddTodo}>
       <TextInputWithLabel
         labelText="Todo"
         elementId="title"
@@ -26,10 +37,10 @@ function TodoForm({ onAddTodo, isSaving, todo }) {
         value={workingTitle}
         onChange={(e) => setWorkingTitle(e.target.value)}
       />
-      <button disabled={workingTitle.trim() === ''}>
+      <Button disabled={workingTitle.trim() === ''}>
         {isSaving ? 'Saving...' : 'Add Todo'}
-      </button>
-    </form>
+      </Button>
+    </Form>
   );
 }
 
