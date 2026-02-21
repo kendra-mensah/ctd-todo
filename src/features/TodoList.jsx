@@ -1,26 +1,21 @@
 import TodoListItem from './TodoListItem.jsx';
-import styles from '/src/TodoList.module.css';
+import styles from '../TodoList.module.css';
 
-function TodoList({ todos, onCompleteTodo, onUpdateTodo, isLoading }) {
+function TodoList({ todos = [], onCompleteTodo, onUpdateTodo, isLoading }) {
+  if (isLoading) return <p>Todo list loading...</p>;
+  if (todos.length === 0) return <p>Add todo above to get started</p>;
+
   return (
-    <>
-      {isLoading ? (
-        <p>Todo list loading...</p> // <-- loading message
-      ) : todos.length === 0 ? (
-        <p>Add todo above to get started</p>
-      ) : (
-        <ul>
-          {todos.map((todo) => (
-            <TodoListItem
-              key={todo.id}
-              todo={todo}
-              onCompleteTodo={onCompleteTodo}
-              onUpdateTodo={onUpdateTodo}
-            />
-          ))}
-        </ul>
-      )}
-    </>
+    <ul className={styles.list}>
+      {todos.map((todo) => (
+        <TodoListItem
+          key={todo.id}
+          todo={todo}
+          onCompleteTodo={onCompleteTodo}
+          onUpdateTodo={onUpdateTodo}
+        />
+      ))}
+    </ul>
   );
 }
 

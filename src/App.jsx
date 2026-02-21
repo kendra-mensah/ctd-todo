@@ -1,9 +1,9 @@
-// src/App.jsx
-import './App.css';
 import { useReducer, useEffect, useCallback, useState } from 'react';
-import TodoList from './features/TodoList.jsx';
-import TodoForm from './features/TodoForm.jsx';
-import TodoViewForm from './features/TodoViewForm.jsx';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import TodosPage from './pages/TodosPage.jsx';
+import Header from './shared/Header.jsx';
+import About from './pages/About.jsx';
+import NotFound from './pages/NotFound.jsx';
 
 import {
   reducer as todosReducer,
@@ -12,21 +12,30 @@ import {
 } from './reducers/todos.reducer.js';
 
 function App() {
-  // -------------------------------
-  // useReducer for todo state
-  // -------------------------------
-  const [todoState, dispatch] = useReducer(todosReducer, initialTodosState);
-  const { todoList, isLoading, isSaving, errorMessage } = todoState;
+  const location = useLocation();
 
   // -------------------------------
-  // Local state for sorting/search
+  // Page title based on route
   // -------------------------------
+  const [title, setTitle] = useState('');
+
+  useEffect(() => {
+    if (location.pathname === '/') setTitle('Todo List');
+    else if (location.pathname === '/about') setTitle('About');
+    else setTitle('Not Found');
+  }, [location]);
+
+  // -------------------------------
+  // Todo state
+  // -------------------------------
+  const [todoState, dispatch] = useReducer(todosReducer, initialTodosState);
+
   const [sortField, setSortField] = useState('createdTime');
   const [sortDirection, setSortDirection] = useState('desc');
   const [queryString, setQueryString] = useState('');
 
   // -------------------------------
-  // URL builder
+  // Encode URL (for search & sort)
   // -------------------------------
   const encodeUrl = useCallback(() => {
     const url = `https://api.airtable.com/v0/${import.meta.env.VITE_BASE_ID}/${import.meta.env.VITE_TABLE_NAME}`;
@@ -43,43 +52,50 @@ function App() {
   }, [sortField, sortDirection, queryString]);
 
   // -------------------------------
-  // Fetch Todos (Pessimistic UI)
+  // Fetch todos from Airtable
   // -------------------------------
   useEffect(() => {
-    const fetchTodos = async () => {
-      dispatch({ type: todoActions.fetchTodos });
+    async function fetchTodos() {
+      dispatch({ type: todoActions.loadingStart }); // existing constant
 
       try {
-        const resp = await fetch(encodeUrl(), {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${import.meta.env.VITE_PAT}` },
+        const url = encodeUrl();
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_PAT}`,
+          },
         });
 
-        const data = await resp.json();
-        if (!resp.ok)
-          throw new Error(data.error?.message || 'Failed to fetch todos');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        dispatch({ type: todoActions.loadTodos, records: data.records });
-      } catch (error) {
-        dispatch({ type: todoActions.setLoadError, error });
+        const data = await response.json();
+
+        // Map Airtable records to your todo objects
+        const todos = data.records.map((rec) => ({
+          id: rec.id,
+          title: rec.fields.title,
+          isCompleted: rec.fields.isCompleted || false,
+        }));
+
+        dispatch({ type: todoActions.set, payload: todos });
+      } catch (err) {
+        dispatch({ type: todoActions.error, payload: err.message });
       }
-    };
+    }
 
     fetchTodos();
   }, [encodeUrl]);
 
   // -------------------------------
-  // Add Todo (Pessimistic UI)
+  // Handlers for TodosPage
   // -------------------------------
   const addTodo = async (newTodo) => {
-    dispatch({ type: todoActions.startRequest });
-
-    const payload = {
-      records: [{ fields: { title: newTodo, isCompleted: false } }],
-    };
+    dispatch({ type: todoActions.loadingStart });
 
     try {
-      const resp = await fetch(
+      const response = await fetch(
         `https://api.airtable.com/v0/${import.meta.env.VITE_BASE_ID}/${import.meta.env.VITE_TABLE_NAME}`,
         {
           method: 'POST',
@@ -87,121 +103,76 @@ function App() {
             Authorization: `Bearer ${import.meta.env.VITE_PAT}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            fields: {
+              title: newTodo.title,
+              isCompleted: false,
+            },
+          }),
         }
       );
 
-      if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error(`Failed to add todo: ${resp.status} - ${errText}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const { records } = await resp.json();
-      const savedTodo = { id: records[0].id, ...records[0].fields };
-      if (!savedTodo.isCompleted) savedTodo.isCompleted = false;
+      const data = await response.json();
+
+      const savedTodo = {
+        id: data.id,
+        title: data.fields.title,
+        isCompleted: data.fields.isCompleted || false,
+      };
 
       dispatch({ type: todoActions.addTodo, todo: savedTodo });
-    } catch (error) {
-      dispatch({ type: todoActions.setLoadError, error });
-    } finally {
-      dispatch({ type: todoActions.endRequest });
+    } catch (err) {
+      dispatch({ type: todoActions.error, payload: err.message });
     }
   };
 
-  // -------------------------------
-  // Update Todo (Optimistic UI)
-  // -------------------------------
-  const updateTodo = async (editedTodo) => {
-    const originalTodo = todoList.find((todo) => todo.id === editedTodo.id);
-
-    const payload = {
-      records: [
-        {
-          id: editedTodo.id,
-          fields: {
-            title: editedTodo.title,
-            isCompleted: editedTodo.isCompleted,
-          },
-        },
-      ],
-    };
-
-    // Optimistic UI update
-    dispatch({ type: todoActions.updateTodo, editedTodo });
-
-    try {
-      const resp = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_BASE_ID}/${import.meta.env.VITE_TABLE_NAME}`,
-        {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_PAT}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error(`Failed to update todo: ${resp.status} - ${errText}`);
-      }
-    } catch (error) {
-      dispatch({
-        type: todoActions.revertTodo,
-        editedTodo: originalTodo,
-        error,
-      });
-    }
+  const updateTodo = (updatedTodo) => {
+    dispatch({ type: todoActions.update, payload: updatedTodo });
   };
 
-  // -------------------------------
-  // Complete Todo (Optimistic UI)
-  // -------------------------------
   const completeTodo = (todo) => {
-    const updatedTodo = { ...todo, isCompleted: true };
-    updateTodo(updatedTodo);
+    dispatch({ type: todoActions.complete, payload: todo });
   };
 
-  // -------------------------------
-  // Render
-  // -------------------------------
+  const clearError = () => {
+    dispatch({ type: todoActions.clearError });
+  };
+
   return (
-    <div>
-      {isLoading && <p>Todo list loading...</p>}
+    <>
+      <Header title={title} />
 
-      {errorMessage && (
-        <div className="error-block">
-          <hr />
-          <p>{errorMessage}</p>
-          <button onClick={() => dispatch({ type: todoActions.clearError })}>
-            Dismiss
-          </button>
-        </div>
-      )}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <TodosPage
+              todoList={todoState.todoList}
+              isLoading={todoState.isLoading}
+              isSaving={todoState.isSaving}
+              errorMessage={todoState.errorMessage}
+              addTodo={addTodo}
+              updateTodo={updateTodo}
+              completeTodo={completeTodo}
+              clearError={clearError}
+              sortField={sortField}
+              setSortField={setSortField}
+              sortDirection={sortDirection}
+              setSortDirection={setSortDirection}
+              queryString={queryString}
+              setQueryString={setQueryString}
+            />
+          }
+        />
 
-      <h1>Todo List</h1>
-
-      <TodoForm onAddTodo={addTodo} isSaving={isSaving} />
-
-      <TodoList
-        todos={todoList}
-        onCompleteTodo={completeTodo}
-        onUpdateTodo={updateTodo}
-        isLoading={isLoading}
-      />
-
-      <hr />
-
-      <TodoViewForm
-        sortField={sortField}
-        setSortField={setSortField}
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
-        queryString={queryString}
-        setQueryString={setQueryString}
-      />
-    </div>
+        <Route path="/about" element={<About />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
 

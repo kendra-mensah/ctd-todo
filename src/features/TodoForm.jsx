@@ -15,17 +15,22 @@ const Button = styled.button`
 function TodoForm({ onAddTodo, disabled, isSaving, todo }) {
   const [workingTitle, setWorkingTitle] = useState(todo ? todo.title : '');
 
-  // Sync workingTitle with todo prop whenever it changes
   useEffect(() => {
-    if (todo) {
-      setWorkingTitle(todo.title);
-    }
+    if (todo) setWorkingTitle(todo.title);
   }, [todo]);
 
   const handleAddTodo = (event) => {
     event.preventDefault();
-    onAddTodo(workingTitle); // call addTodo from App.jsx
-    setWorkingTitle(''); // clear input after adding
+    if (!workingTitle.trim()) return;
+
+    const newTodo = {
+      id: Date.now().toString(),
+      title: workingTitle,
+      isCompleted: false,
+    };
+
+    onAddTodo?.(newTodo); // safe call
+    setWorkingTitle('');
   };
 
   return (
@@ -33,11 +38,9 @@ function TodoForm({ onAddTodo, disabled, isSaving, todo }) {
       <TextInputWithLabel
         labelText="Todo"
         elementId="title"
-        ref={null} // no ref needed
         value={workingTitle}
         onChange={(e) => setWorkingTitle(e.target.value)}
       />
-
       <Button type="submit" disabled={disabled || workingTitle.trim() === ''}>
         {isSaving ? 'Saving...' : 'Add Todo'}
       </Button>
