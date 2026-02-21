@@ -1,24 +1,25 @@
-import { useState } from 'react';
-import TextInputWithLabel from '../shared/TextInputWithLabel.jsx'; // fixed
+import { useState, useEffect } from 'react';
+import TextInputWithLabel from '../shared/TextInputWithLabel.jsx';
 import styles from '/src/TodoListItem.module.css';
 
 function TodoListItem({ todo, onCompleteTodo, onUpdateTodo }) {
   const [isEditing, setIsEditing] = useState(false);
   const [workingTitle, setWorkingTitle] = useState(todo.title);
 
+  // Reset workingTitle when todo prop changes (handles stale input)
+  useEffect(() => {
+    setWorkingTitle(todo.title);
+  }, [todo]);
+
   const handleUpdate = (e) => {
     e.preventDefault();
-    onUpdateTodo({ ...todo, workingTitle });
+    onUpdateTodo({ ...todo, title: workingTitle });
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setWorkingTitle(todo.title);
     setIsEditing(false);
-  };
-
-  const handleEdit = (event) => {
-    setWorkingTitle(event.target.value);
   };
 
   return (
@@ -30,7 +31,7 @@ function TodoListItem({ todo, onCompleteTodo, onUpdateTodo }) {
               elementId={`todo-${todo.id}`}
               labelText="Todo"
               value={workingTitle}
-              onChange={handleEdit}
+              onChange={(e) => setWorkingTitle(e.target.value)}
             />
 
             <button type="button" onClick={handleCancel}>
@@ -44,9 +45,8 @@ function TodoListItem({ todo, onCompleteTodo, onUpdateTodo }) {
             <label>
               <input
                 type="checkbox"
-                id={`checkbox-${todo.id}`}
                 checked={todo.isCompleted}
-                onChange={() => onCompleteTodo(todo.id)}
+                onChange={() => onCompleteTodo(todo)}
               />
             </label>
             <span onClick={() => setIsEditing(true)}>{todo.title}</span>
