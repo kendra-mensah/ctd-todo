@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import TextInputWithLabel from '../shared/TextInputWithLabel.jsx';
-import styles from '/src/TodoListItem.module.css';
+import styles from '../TodoListItem.module.css';
 
 function TodoListItem({ todo, onCompleteTodo, onUpdateTodo }) {
   const [isEditing, setIsEditing] = useState(false);
   const [workingTitle, setWorkingTitle] = useState(todo.title);
 
-  // Reset workingTitle when todo prop changes (handles stale input)
   useEffect(() => {
     setWorkingTitle(todo.title);
   }, [todo]);
 
   const handleUpdate = (e) => {
     e.preventDefault();
-    onUpdateTodo({ ...todo, title: workingTitle });
+    if (!workingTitle.trim()) return;
+    onUpdateTodo?.({ ...todo, title: workingTitle });
     setIsEditing(false);
   };
 
@@ -33,12 +33,12 @@ function TodoListItem({ todo, onCompleteTodo, onUpdateTodo }) {
               value={workingTitle}
               onChange={(e) => setWorkingTitle(e.target.value)}
             />
-
             <button type="button" onClick={handleCancel}>
               Cancel
             </button>
-
-            <button type="submit">Update</button>
+            <button type="submit" disabled={!workingTitle.trim()}>
+              Update
+            </button>
           </>
         ) : (
           <>
@@ -46,10 +46,12 @@ function TodoListItem({ todo, onCompleteTodo, onUpdateTodo }) {
               <input
                 type="checkbox"
                 checked={todo.isCompleted}
-                onChange={() => onCompleteTodo(todo)}
+                onChange={() => onCompleteTodo?.(todo)}
               />
             </label>
-            <span onClick={() => setIsEditing(true)}>{todo.title}</span>
+            <span className={styles.title} onClick={() => setIsEditing(true)}>
+              {todo.title}
+            </span>
           </>
         )}
       </form>
